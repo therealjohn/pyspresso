@@ -1,0 +1,114 @@
+$def with (persisted)
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>iSPRESSO Echo Settings</title>
+  
+  <link rel="stylesheet" href="/static/jquery.mobile-1.3.2.min.css">
+  
+  <!-- Extra Codiqa features -->
+  <!--link rel="stylesheet" href="/static/codiqa.ext.css"-->
+  
+  <!-- jQuery and jQuery Mobile -->
+  <script src="/static/jquery-1.9.1.min.js"></script>
+  <script src="/static/jquery.mobile-1.3.2.min.js"></script>
+
+  <!-- Extra Codiqa features -->
+  <!--script src="/static/codiqa.ext.js"></script-->
+
+</head>
+<body>
+<!-- Home -->
+<div data-role="page" id="page1">
+    <div data-theme="a" data-role="header">
+        <div id="logo"><img src="/static/images/ispresso_logo.png" alt="iSPRESSO" align="center" /></div>
+        <div data-role="navbar" data-iconpos="top">
+            <ul>
+                <li>
+                    <a href="/" data-transition="fade" data-theme="" data-icon=""  rel="external">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <a href="settings" data-transition="fade" data-theme="" data-icon="" rel="external">
+                        Settings
+                    </a>
+                </li>
+                <li>
+                    <a href="schedule" data-transition="fade" data-theme="" data-icon="" rel="external">
+                        Schedule
+                    </a>
+                </li>
+                <li>
+                    <a href="advanced" data-transition="fade" data-theme="" data-icon="" rel="external">
+                        Advanced
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div data-role="content" style="width:750px; margin:auto; "  >
+    <BR>
+    Alexa (<a href="http://echo.amazon.com" target="_new">Amazon Echo</a>) voice control is possible when you 
+    link your Echo to iSPRESSO using an identifier provided by Alexa iSPRESSO skill (app).<BR><BR>
+    With iSPRESSO skill enabled, say "Alexa, tell ispresso setup". <BR><BR>
+    Alexa application (on mobile device) or web application (echo.amazon.com) will provide a card with your unique Alexa iSPRESSO UserID. <BR> <BR>
+    Enter that value below and save, and your iSPRESSO will be linked with your Alexa.<BR><BR>
+        <div data-role="fieldcontain"  align="center">
+            <label for="userId">
+                Echo iSPRESSO User ID 
+            </label>
+            <input id="userId" name="userId" value="" data-highlight="false" /><BR><BR>
+        </div>
+        <div style="width:100px; margin:auto;" >
+        <input type="button" id="submit" name="submit" value="Submit"  />
+        </div>
+    </div>
+</div>
+
+<script>
+
+	 jQuery(document).ready(function() {
+
+		jQuery("#logo img").css({ 'max-width' : jQuery(window).width() });
+		jQuery("#logo img").css({"height" : "auto"});
+
+		var myJson = $:persisted;
+	    myVal = myJson.userId;
+	    jQuery("#userId").val(myVal);
+
+		jQuery("#submit").click( function() { 
+			var userId = jQuery("#userId").val();
+
+			var mySetting = {};
+			mySetting["userId"] = userId;
+			
+			var ServerUrl = "/echo";
+            jQuery.ajax({
+                    url : ServerUrl,
+                    type : "POST",
+                    contentType: 'application/json',
+                    dataType : 'json',
+                    data : JSON.stringify(mySetting),
+                    success : function(response) {
+                        var ajaxResponse = JSON.stringify(response);
+                              alert("Settings saved " + ajaxResponse);
+                    },
+                    error: function (request, status, error) {
+	                    jQuery("#txtDebug").val(request.responseText);
+                    }
+
+            });
+
+		});
+
+	});
+
+</script>
+
+</body>
+</html>

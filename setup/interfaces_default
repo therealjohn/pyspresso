@@ -1,0 +1,14 @@
+auto lo
+
+iface lo inet loopback
+
+allow-hotplug wlan0
+auto wlan0
+iface wlan0 inet dhcp
+  wpa-ssid "Westward"
+  wpa-psk "heywhatmywaffle"
+
+  # pre-up wpa_supplicant  
+  # post-down # wpa_supplicant  
+
+

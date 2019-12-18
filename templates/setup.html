@@ -1,0 +1,325 @@
+$def with (persisted)
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <title>iSPRESSO SETUP</title>
+
+        <link rel="stylesheet" href="/static/jquery.mobile-1.4.5.min.css">
+
+        <!-- Extra Codiqa features -->
+        <!--link rel="stylesheet" href="/static/codiqa.ext.css"-->
+
+        <!-- jQuery and jQuery Mobile -->
+        <script src="/static/jquery-2.1.4.min.js"></script>
+        <script src="/static/jquery.mobile-1.4.5.min.js"></script>
+
+
+        <!-- Extra Codiqa features -->
+        <!--script src="/static/codiqa.ext.js"></script-->
+
+        <script type="text/javascript" >
+
+            function formatFields(myObj)        // takes in a collection object of checked checkboxes of a particular class, returns a formatted string - really written for the wpa_supplication.conf file
+            {       
+                return jQuery.param(myObj).replace(/\&/g, " ").replace(/=/g, "");
+            }
+
+			jQuery(document).ready(function() {
+
+				jQuery("#logo img").css({
+					'max-width' : jQuery(window).width()
+				});
+				jQuery("#logo img").css({
+					"height" : "auto"
+				});
+
+				var myVar = $:persisted;
+				myThing = "<ul>";
+
+				jQuery(myVar).each(function(index) {
+					myThing += "<li><a href=# class=myEssid >" + myVar[index] + "</a></li>";
+				});
+				myThing += "</ul>";
+
+                jQuery("#perNetworklist").html(myThing);
+				jQuery("#entNetworklist").html(myThing);
+				// the ESSID field is left open intentionally in case it's an unpublished network
+
+				jQuery(".myEssid").click(function(id) {
+					jQuery("#perSsid").val(jQuery(this).html());
+                    jQuery("#entSsid").val(jQuery(this).html());
+
+				});
+
+				jQuery("#divSubmitted").hide();
+
+				jQuery("#btnPerSubmit").click(function() {
+
+					var ssid = jQuery("#perSsid").val();
+					var passwd = jQuery("#perPasswd").val();
+
+					jQuery("#divSubmitted").show();
+					jQuery("#divUnsubmitted").hide();
+
+					jQuery.ajax({
+						url : "/setup", 
+						type : "post",
+						data : {
+						    "protocol" : "personal",
+							"ssid" : ssid,
+							"passwd" : passwd
+						},
+						complete : function(xhr, result) {
+							if (result != "success")
+								return;
+							var response = xhr.responseText;
+//							alert(response);
+						}
+					});
+
+				});
+				
+                jQuery("#btnEntSubmit").click(function() {
+
+                    var keymgt = jQuery(".chkKeyMgt:checked");
+                    keymgt = formatFields(keymgt);
+                    
+                    var eap = jQuery(".chkEAP:checked");
+                    eap = formatFields(eap);
+
+                    var group = jQuery(".chkGroup:checked");
+                    group = formatFields(group);
+                    
+                    var pairwise = jQuery(".chkPair:checked");
+                    pairwise = formatFields(pairwise);
+
+                    jQuery("#divSubmitted").show();
+                    jQuery("#divUnsubmitted").hide();
+
+                    var formData = new FormData();
+                    formData.append("protocol", "enterprise");
+                    formData.append("ssid", jQuery("#entSsid").val());
+                    formData.append("psk", jQuery("#entPsk").val());
+                    formData.append("identity", jQuery("#entUser").val());
+                    formData.append("passwd", jQuery("#entPasswd").val());
+                    formData.append("ca_cert", jQuery('#ca_cert')[0].files[0]);
+                    formData.append("eap", eap);
+                    formData.append("pairwise", pairwise);
+                    formData.append("key_mgmt", keymgt);
+                    formData.append("group", group);
+
+                    jQuery.ajax({
+                        url : "/setup", 
+                        type : "post",
+                        data : formData,
+                        enctype: 'multipart/form-data',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        complete : function(xhr, result) {
+                            if (result != "success")
+                            {
+                                alert(result);
+//                                return;
+                            }    
+                            var response = xhr.responseText;
+//                            alert(response);
+                        }
+                    });
+
+                });
+
+                jQuery("#aPer").trigger("click");
+
+			});
+			
+			
+        </script>
+    </head>
+    <body>
+        <!-- Home -->
+        <div data-role="page" id="page1">
+            <div data-theme="a" data-role="header">
+                <div id="logo">
+                    <img src="/static/images/ispresso_logo.png" alt="iSPRESSO" align="center" />
+                </div>
+            </div>
+
+        <div id="divUnsubmitted" name="divUnsubmitted" style="margin-left: 10%; margin-right:10%; align:center" >
+        <BR>        <BR>
+        <B>Welcome to iSPRESSO Setup! </B>
+        <BR>        <BR>
+        Your iSPRESSO is not yet configured to use a WIFI access point.
+        For best results, put in your Wifi information below and iSPRESSO will attempt to join the network.
+        <BR>        <BR>
+        Alternatively, you can still continue to use the device while connected to "ispresso" network using iSPRESSO <a href="/">main page</a>.
+        <br><br><BR>
+
+            <div data-role="tabs" name="tabs" id="tabs" class="tabs">
+
+              <div data-role="navbar">
+                <ul>
+                  <li><a href="#per" id="aPer" data-ajax="false">WPA-Personal</a></li>
+                  <li><a href="#ent" data-ajax="false">WPA-Enterprise</a></li>
+                </ul>
+              </div>
+
+                <div id="per"  >
+                    <form name="frmPer" id="frmPer" action="/setup" method="post" >
+                        <table width="50%" align="center">
+                            <tr>
+                                <td colspan=2>
+                                <BR>
+                                Found networks:
+                                <br>
+                                <div id="perNetworklist" name="perNetworklist" > </div></td>
+                            </tr>
+                            <tr>
+                                <td align="right">SSID: </td>
+                                <td>
+                                <input type="text" name="perSsid" id="perSsid">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="right">Password (WPA-PSK): </td>
+                                <td>
+                                <input type="password" name="perPasswd" id="perPasswd">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan=2>
+                                <input type="button" name="btnPerSubmit" id="btnPerSubmit" value="Submit">
+                                </td>
+                            </tr>
+                        </table>
+
+                    </form>
+
+                </div>
+                
+                <div id="ent" >
+                    <form name="frmEnt" id="frmEnt" action="/setup" method="post" >
+                        <table width="50%" align="center">
+                        <tr>
+                            <td colspan=2>
+                            <BR>
+                            Found networks:
+                            <br>
+                            <div id="entNetworklist" name="entNetworklist" > </div></td>
+                        </tr>                        
+                        <tr>
+                            <td align="right">SSID: </td>
+                            <td>
+                            <input type="hidden" name="protocol" id="protocol" value="enterprise" />
+                            <input type="text" name="entSsid" id="entSsid">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">Private Shared Key (PSK): </td>
+                            <td>
+                            <input type="password" name="entPsk" id="entPsk">
+                            </td>
+                        </tr>                        
+                        <tr>
+                            <td align="right">Username: </td>
+                            <td>
+                            <input type="text" name="entUser" id="entUser">
+                            </td>
+                        </tr>                        
+                        <tr>
+                            <td align="right">Password: </td>
+                            <td>
+                            <input type="password" name="entPasswd" id="entPasswd">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">CA Certificate</td>
+                            <td>
+                            <input type="file" name="ca_cert" id="ca_cert">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">Key Management: </td>
+                            <td>
+                                <fieldset data-role="controlgroup" >
+                                <input type="checkbox" value="WPA-PSK" class="chkKeyMgt" id="chkPSK"/><label for="chkPSK">WPA-PSK</label> 
+                                <input type="checkbox" value="WPA-EAP" class="chkKeyMgt" id="chkEAP"/><label for="chkEAP">WPA-EAP</label>
+                                <input type="checkbox" value="IEEE8021X" class="chkKeyMgt" id="chkIEEE"/><label for="chkIEEE">IEEE8021X</label> 
+                                <input type="checkbox" value="NONE" class="chkKeyMgt" id="chkNone"/><label for="chkNone">NONE</label> 
+                                </fieldset>
+                            </td>
+                        </tr>   
+                         <tr>
+                            <td align="right">Pairwise: </td>
+                            <td>
+                                <fieldset data-role="controlgroup" >
+                                <input type="checkbox" value="CCMP" class="chkPair" id="chkPwCCMP"/><label for="chkPwCCMP">CCMP</label> 
+                                <input type="checkbox" value="TKIP" class="chkPair" id="chkPwTKIP"/><label for="chkPwTKIP">TKIP</label>
+
+                                </fieldset>
+                            </td>
+                        </tr>
+                         <tr>
+                            <td align="right">Group: </td>
+                            <td>
+                                <fieldset data-role="controlgroup" >
+                                <input type="checkbox" value="CCMP" class="chkGroup" id="chkCCMP"/><label for="chkCCMP">CCMP</label> 
+                                <input type="checkbox" value="TKIP" class="chkGroup" id="chkTKIP"/><label for="chkTKIP">TKIP</label>
+                                <input type="checkbox" value="WEP140" class="chkGroup" id="chkWEP140"/><label for="chkWEP140">WEP140</label>
+                                <input type="checkbox" value="WEP40" class="chkGroup" id="chkWEP40"/><label for="chkWEP40">WEP40</label>
+                                </fieldset>
+                            </td>
+                        </tr> 
+                       <tr>
+                            <td align="right">EAP: </td>
+                            <td>
+                                <fieldset data-role="controlgroup" >
+                                <input type="checkbox" value="TTLS" class="chkEAP" id="chkTTLS"/><label for="chkTTLS">TTLS</label> 
+                                <input type="checkbox" value="PEAP" class="chkEAP" id="chkPEAP"/><label for="chkPEAP">PEAP</label>
+                                <input type="checkbox" value="TLS" class="chkEAP" id="chkTLS"/><label for="chkTLS">TLS</label> 
+                                </fieldset>
+                            </td>
+                        </tr>   
+                        <tr>
+                            <td colspan=2>
+                            <input type="button" name="btnEntSubmit" id="btnEntSubmit" value="Submit">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div name="divSubmitted" id="divSubmitted" >
+            <table width="50%" align="center">
+                <tr>
+                    <td>
+                    <BR>
+                    <BR>
+                    <B>Thanks!</B>
+                    <BR>
+                    <BR>
+                    Your iSPRESSO is now reconfiguring itself to join your network, and it will only
+                    re-activate the "ispresso" wifi network if it has trouble getting on the network you specified.
+                    <BR>
+                    <BR>
+                    While iSPRESSO is resetting its software configuration, please drop off of "ispresso" wifi network and re-join
+                    your primary wifi / internet access point.
+                    <BR>
+                    <BR>
+                    When you are back on your regular wifi network, <a href="/">click here</a> to return to iSPRESSO normal operation. </td>
+                </tr>
+            </table>
+        </div>
+        
+
+        </div>
+
+
+
+    </body>
+</html>
